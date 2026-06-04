@@ -11,7 +11,9 @@ DOCS_DIR = os.path.join(ROOT_DIR, "docs")
 
 def load_image(name: str, size: tuple[int, int] | None = None) -> pygame.Surface:
     path = os.path.join(IMAGE_DIR, name)
-    image = pygame.image.load(path).convert_alpha()
+    image = pygame.image.load(path)
+    if pygame.display.get_surface() is not None:
+        image = image.convert_alpha()
     if size:
         image = pygame.transform.scale(image, size)
     return image
