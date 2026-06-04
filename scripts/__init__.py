@@ -17,9 +17,10 @@ from scripts.constants import (
 )
 from scripts.enemy import Enemy
 from scripts.enemy_spawner import EnemySpawner
-from scripts.fonts import GameFonts, get_font
+from scripts.fonts import GameFonts
 from scripts.fragment import Fragment
 from scripts.hit_effect import HitEffect, HitEffectManager
+from scripts.levelup_effect import LevelUpEffect, LevelUpEffectManager
 from scripts.game_manager import GameManager
 from scripts.hud import HUD
 from scripts.lives_ui import LivesUI
@@ -44,7 +45,6 @@ __all__ = [
     "ScreenRenderer",
     "LivesUI",
     "GameFonts",
-    "get_font",
     "collide_weapons_and_enemies",
     "player_hit_by_enemies",
     "collide_player_and_fragments",
@@ -56,6 +56,8 @@ __all__ = [
     "GridSpriteSheet",
     "HitEffect",
     "HitEffectManager",
+    "LevelUpEffect",
+    "LevelUpEffectManager",
     "STATE_TITLE",
     "STATE_PLAY",
     "STATE_DYING",

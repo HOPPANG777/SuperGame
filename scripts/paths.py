@@ -5,8 +5,22 @@ import pygame
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMAGE_DIR = os.path.join(ROOT_DIR, "assets", "images")
+FONT_DIR = os.path.join(ROOT_DIR, "assets", "fonts")
 SOUND_DIR = os.path.join(ROOT_DIR, "assets", "sounds")
 DOCS_DIR = os.path.join(ROOT_DIR, "docs")
+
+FONT_MAPLE_BOLD = "Maplestory Bold.ttf"
+FONT_MAPLE_LIGHT = "Maplestory Light.ttf"
+
+IMAGE_TITLE_BG = "NordicLumberjacTitle.png"
+IMAGE_PANEL = "Panel1.png"
+IMAGE_DEFEAT_BG = "막혔다2.png"
+IMAGE_CLEAR_BG = "이겼다2.png"
+
+
+def load_font(name: str, size: int) -> pygame.font.Font:
+    path = os.path.join(FONT_DIR, name)
+    return pygame.font.Font(path, size)
 
 
 def load_image(name: str, size: tuple[int, int] | None = None) -> pygame.Surface:

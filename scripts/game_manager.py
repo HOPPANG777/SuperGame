@@ -22,7 +22,13 @@ from scripts.lives_ui import LivesUI
 from scripts.orbiting_weapons import OrbitingWeapons
 from scripts.play_session import PlaySession
 from scripts.player import Player
-from scripts.screens import ScreenRenderer
+from scripts.screens import (
+    ACTION_QUIT,
+    ACTION_RESTART,
+    ACTION_START,
+    ACTION_TITLE,
+    ScreenRenderer,
+)
 from scripts.constants import MAX_LIVES, SCREEN_SIZE
 
 
@@ -63,6 +69,11 @@ class GameManager:
 
         self.state = STATE_TITLE
         self.running = True
+        self.screens.ensure_layout(self.fonts)
+
+    def go_title(self) -> None:
+        self.state = STATE_TITLE
+        self.audio.stop_bgm()
 
     def start_play(self) -> None:
         self.state = STATE_PLAY
@@ -70,11 +81,26 @@ class GameManager:
         self.audio.play_sfx(self.audio.sfx_start)
         self.audio.start_bgm()
 
+    def _apply_menu_action(self, action: str | None) -> None:
+        if action == ACTION_START or action == ACTION_RESTART:
+            self.start_play()
+        elif action == ACTION_TITLE:
+            self.go_title()
+        elif action == ACTION_QUIT:
+            self.running = False
+
     def handle_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
                 return
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                action = self.screens.handle_click(
+                    self.state, event.pos
+                )
+                self._apply_menu_action(action)
+                continue
 
             if event.type != pygame.KEYDOWN:
                 continue
@@ -85,11 +111,13 @@ class GameManager:
             elif self.state == STATE_CLEAR:
                 if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     self.running = False
+                elif event.key == pygame.K_ESCAPE:
+                    self.go_title()
             elif self.state == STATE_GAMEOVER:
                 if event.key == pygame.K_r:
                     self.start_play()
                 elif event.key == pygame.K_ESCAPE:
-                    self.running = False
+                    self.go_title()
 
     def run(self) -> None:
         while self.running:
@@ -107,6 +135,8 @@ class GameManager:
                 next_state = self.session.update_dying(dt)
                 if next_state:
                     self.state = next_state
+                    if next_state == STATE_GAMEOVER:
+                        self.audio.play_sfx(self.audio.sfx_defeat)
                 self.session.draw_dying(self.screen)
 
             elif self.state == STATE_TITLE:
@@ -116,11 +146,9 @@ class GameManager:
                 self.screens.draw_clear(self.screen, self.fonts, self.session.score)
 
             elif self.state == STATE_GAMEOVER:
-                self.background.draw(self.screen, BACKGROUND_COLOR)
                 self.screens.draw_gameover(
                     self.screen,
                     self.fonts,
-                    self.player,
                     self.session.score,
                     self.session.kills,
                 )

@@ -26,6 +26,7 @@ from scripts.orbiting_weapons import OrbitingWeapons
 from scripts.background import Background
 from scripts.audio_manager import AudioManager
 from scripts.hit_effect import HitEffectManager
+from scripts.levelup_effect import LevelUpEffectManager
 from scripts.screens import ScreenRenderer
 
 
@@ -54,6 +55,7 @@ class PlaySession:
         self.screens = screens
         self.fonts = fonts
         self.hit_effects = HitEffectManager()
+        self.levelup_effects = LevelUpEffectManager()
 
         self.score = 0
         self.kills = 0
@@ -67,6 +69,7 @@ class PlaySession:
         self.spawner.reset()
         self.fragments.empty()
         self.hit_effects.clear()
+        self.levelup_effects.clear()
         self.weapons.set_count(INITIAL_WEAPON_COUNT)
         self.weapons.angle = 0
         self.score = 0
@@ -103,6 +106,7 @@ class PlaySession:
             while self.fragment_buffer >= FRAGMENTS_PER_WEAPON:
                 self.fragment_buffer -= FRAGMENTS_PER_WEAPON
                 self.weapons.set_count(self.weapons.count + 1)
+                self.levelup_effects.spawn(self.player.rect.center)
                 self.audio.play_sfx(self.audio.sfx_levelup)
 
         if not self.is_invincible():
@@ -133,14 +137,20 @@ class PlaySession:
         for enemy in self.spawner.enemies:
             enemy.update(self.player.pos, dt)
         self.spawner.cull_offscreen()
-        self.fragments.update(dt)
+        player_center = self.player.rect.center
+        for fragment in self.fragments:
+            fragment.update(player_center, dt)
         next_state = self.handle_collisions()
         self.hit_effects.update(dt)
+        self.levelup_effects.update(player_center, dt)
         return next_state
 
     def draw(self, screen: pygame.Surface) -> None:
         self.background.draw(screen, BACKGROUND_COLOR)
 
+        self.fragments.draw(screen)
+        self.levelup_effects.draw(screen)
+        self.spawner.enemies.draw(screen)
         if self.player.is_dying:
             self.player.draw(screen)
         elif self.is_invincible():
@@ -149,9 +159,7 @@ class PlaySession:
         else:
             self.player.draw(screen)
         self.weapons.draw(screen)
-        self.spawner.enemies.draw(screen)
         self.hit_effects.draw(screen)
-        self.fragments.draw(screen)
         self.hud.draw(
             screen,
             self.fonts,
