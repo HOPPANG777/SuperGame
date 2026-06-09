@@ -15,7 +15,7 @@ from scripts.paths import (
     IMAGE_TITLE_BG,
     load_image,
 )
-from scripts.ui_button import MenuButton
+from scripts.ui_button import PANEL_SIZE_RESULT, PANEL_SIZE_TITLE, MenuButton
 
 # 타이틀 — 하늘 위에서 잘 보이게
 TITLE_COLOR = (255, 238, 120)
@@ -27,10 +27,10 @@ SCORE_COLOR = (240, 240, 240)
 COLOR_BTN_CLEAR = (25, 150, 55)
 COLOR_BTN_DEFEAT = (200, 40, 45)
 
-# 승리·패배 — 배경 큰 글자(중앙) / 점수 / 버튼 세로 분리
-RESULT_STATS_Y = 500
-RESULT_BTN_Y = 660
-RESULT_BTN_SPREAD = 170
+# 승리·패배 — 배경 큰 글자(중앙) / 점수 / 버튼 세로 스택
+RESULT_STATS_Y = 488
+RESULT_BTN_GAP = 14
+RESULT_BTN_TOP_Y = 548
 
 ACTION_START = "start"
 ACTION_RESTART = "restart"
@@ -56,8 +56,28 @@ class ScreenRenderer:
             return image
         return pygame.transform.smoothscale(image, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
-    def _layout_buttons(self, fonts: GameFonts) -> None:
+    def _stack_result_buttons(
+        self,
+        fonts: GameFonts,
+        specs: list[tuple[str, tuple[int, int, int], str]],
+    ) -> list[MenuButton]:
         cx = WINDOW_WIDTH // 2
+        step = PANEL_SIZE_RESULT[1] + RESULT_BTN_GAP
+        buttons: list[MenuButton] = []
+        for i, (label, color, action) in enumerate(specs):
+            buttons.append(
+                MenuButton(
+                    label,
+                    (cx, RESULT_BTN_TOP_Y + i * step),
+                    fonts.btn,
+                    color,
+                    action,
+                    panel_size=PANEL_SIZE_RESULT,
+                )
+            )
+        return buttons
+
+    def _layout_buttons(self, fonts: GameFonts) -> None:
         btn_x = 920
 
         self.title_buttons = [
@@ -67,43 +87,25 @@ class ScreenRenderer:
                 fonts.btn,
                 (50, 90, 50),
                 ACTION_START,
+                panel_size=PANEL_SIZE_TITLE,
             ),
         ]
 
-        half = RESULT_BTN_SPREAD // 2
-        self.clear_buttons = [
-            MenuButton(
-                "타이틀로",
-                (cx - half, RESULT_BTN_Y),
-                fonts.btn,
-                COLOR_BTN_CLEAR,
-                ACTION_TITLE,
-            ),
-            MenuButton(
-                "종료",
-                (cx + half, RESULT_BTN_Y),
-                fonts.btn,
-                COLOR_BTN_CLEAR,
-                ACTION_QUIT,
-            ),
-        ]
+        self.clear_buttons = self._stack_result_buttons(
+            fonts,
+            [
+                ("타이틀로", COLOR_BTN_CLEAR, ACTION_TITLE),
+                ("종료", COLOR_BTN_CLEAR, ACTION_QUIT),
+            ],
+        )
 
-        self.gameover_buttons = [
-            MenuButton(
-                "다시하기",
-                (cx - half, RESULT_BTN_Y),
-                fonts.btn,
-                COLOR_BTN_DEFEAT,
-                ACTION_RESTART,
-            ),
-            MenuButton(
-                "타이틀로",
-                (cx + half, RESULT_BTN_Y),
-                fonts.btn,
-                COLOR_BTN_DEFEAT,
-                ACTION_TITLE,
-            ),
-        ]
+        self.gameover_buttons = self._stack_result_buttons(
+            fonts,
+            [
+                ("다시하기", COLOR_BTN_DEFEAT, ACTION_RESTART),
+                ("타이틀로", COLOR_BTN_DEFEAT, ACTION_TITLE),
+            ],
+        )
 
     def ensure_layout(self, fonts: GameFonts) -> None:
         if not self.title_buttons:
@@ -134,7 +136,9 @@ class ScreenRenderer:
                 return btn.action
         return None
 
-    def draw_title(self, screen: pygame.Surface, fonts: GameFonts) -> None:
+    def draw_title(
+        self, screen: pygame.Surface, fonts: GameFonts, high_score: int
+    ) -> None:
         self.ensure_layout(fonts)
         screen.blit(self._title_bg, (0, 0))
 
@@ -151,19 +155,57 @@ class ScreenRenderer:
         screen.blit(title, title.get_rect(midtop=(WINDOW_WIDTH // 2, 48)))
         screen.blit(sub, sub.get_rect(midtop=(WINDOW_WIDTH // 2, 132)))
 
+        best = render_outlined(
+            fonts.sm,
+            f"최고 점수: {high_score}",
+            (255, 220, 100),
+            TITLE_OUTLINE,
+            width=2,
+        )
+        screen.blit(best, best.get_rect(midtop=(WINDOW_WIDTH // 2, 178)))
+
+        if (pygame.time.get_ticks() // 500) % 2 == 0:
+            hint = render_outlined(
+                fonts.sm,
+                "SPACE 또는 버튼으로 시작",
+                SUBTITLE_COLOR,
+                SUBTITLE_OUTLINE,
+                width=2,
+            )
+            screen.blit(hint, hint.get_rect(midtop=(WINDOW_WIDTH // 2, 218)))
+
         self._draw_buttons(screen, self.title_buttons)
 
+    def _draw_result_stats(
+        self,
+        screen: pygame.Surface,
+        fonts: GameFonts,
+        lines: list[str],
+        start_y: int = RESULT_STATS_Y,
+        line_gap: int = 28,
+    ) -> None:
+        for i, text in enumerate(lines):
+            surf = fonts.sm.render(text, True, SCORE_COLOR)
+            screen.blit(
+                surf,
+                surf.get_rect(center=(WINDOW_WIDTH // 2, start_y + i * line_gap)),
+            )
+
     def draw_clear(
-        self, screen: pygame.Surface, fonts: GameFonts, score: int
+        self,
+        screen: pygame.Surface,
+        fonts: GameFonts,
+        score: int,
+        high_score: int,
+        new_record: bool,
     ) -> None:
         self.ensure_layout(fonts)
         screen.blit(self._clear_bg, (0, 0))
 
-        score_surf = fonts.sm.render(f"점수: {score}", True, SCORE_COLOR)
-        screen.blit(
-            score_surf,
-            score_surf.get_rect(center=(WINDOW_WIDTH // 2, RESULT_STATS_Y)),
-        )
+        lines = [f"점수: {score}", f"최고 점수: {high_score}"]
+        if new_record:
+            lines.append("★ 신기록! ★")
+        self._draw_result_stats(screen, fonts, lines)
 
         self._draw_buttons(screen, self.clear_buttons)
 
@@ -173,17 +215,19 @@ class ScreenRenderer:
         fonts: GameFonts,
         score: int,
         kills: int,
+        high_score: int,
+        new_record: bool,
     ) -> None:
         """패배 화면 — 막혔다2 배경 + 빨간 버튼."""
         self.ensure_layout(fonts)
         screen.blit(self._defeat_bg, (0, 0))
 
-        stats = fonts.sm.render(
-            f"점수: {score}  ·  처치: {kills}", True, SCORE_COLOR
-        )
-        screen.blit(
-            stats,
-            stats.get_rect(center=(WINDOW_WIDTH // 2, RESULT_STATS_Y)),
-        )
+        lines = [
+            f"점수: {score}  ·  처치: {kills}",
+            f"최고 점수: {high_score}",
+        ]
+        if new_record:
+            lines.append("★ 신기록! ★")
+        self._draw_result_stats(screen, fonts, lines)
 
         self._draw_buttons(screen, self.gameover_buttons)

@@ -30,6 +30,7 @@ from scripts.screens import (
     ScreenRenderer,
 )
 from scripts.constants import MAX_LIVES, SCREEN_SIZE
+from scripts.high_score import load_high_score, submit_score
 
 
 class GameManager:
@@ -69,11 +70,17 @@ class GameManager:
 
         self.state = STATE_TITLE
         self.running = True
+        self.high_score = load_high_score()
+        self.last_run_new_record = False
         self.screens.ensure_layout(self.fonts)
 
     def go_title(self) -> None:
         self.state = STATE_TITLE
         self.audio.stop_bgm()
+        self.high_score = load_high_score()
+
+    def _record_score(self, score: int) -> None:
+        self.high_score, self.last_run_new_record = submit_score(score)
 
     def start_play(self) -> None:
         self.state = STATE_PLAY
@@ -129,6 +136,8 @@ class GameManager:
                 next_state = self.session.update(keys, dt)
                 if next_state:
                     self.state = next_state
+                    if next_state == STATE_CLEAR:
+                        self._record_score(self.session.score)
                 self.session.draw(self.screen)
 
             elif self.state == STATE_DYING:
@@ -136,14 +145,23 @@ class GameManager:
                 if next_state:
                     self.state = next_state
                     if next_state == STATE_GAMEOVER:
+                        self._record_score(self.session.score)
                         self.audio.play_sfx(self.audio.sfx_defeat)
                 self.session.draw_dying(self.screen)
 
             elif self.state == STATE_TITLE:
-                self.screens.draw_title(self.screen, self.fonts)
+                self.screens.draw_title(
+                    self.screen, self.fonts, self.high_score
+                )
 
             elif self.state == STATE_CLEAR:
-                self.screens.draw_clear(self.screen, self.fonts, self.session.score)
+                self.screens.draw_clear(
+                    self.screen,
+                    self.fonts,
+                    self.session.score,
+                    self.high_score,
+                    self.last_run_new_record,
+                )
 
             elif self.state == STATE_GAMEOVER:
                 self.screens.draw_gameover(
@@ -151,6 +169,8 @@ class GameManager:
                     self.fonts,
                     self.session.score,
                     self.session.kills,
+                    self.high_score,
+                    self.last_run_new_record,
                 )
 
             pygame.display.flip()

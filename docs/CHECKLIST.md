@@ -29,4 +29,17 @@ scripts/
   background.py
   sprite_anim.py
   constants.py / fonts.py / paths.py
+  high_score.py         고득점 (score.txt)
+  ui_button.py          메뉴 버튼
+  hit_effect.py / levelup_effect.py
 ```
+
+## Lecture 14 (폴리싱)
+
+| 항목 | 상태 |
+|------|------|
+| 타이틀·승패 UI | [x] |
+| 고득점 저장 | [x] |
+| PyInstaller 경로 | [x] |
+| build.bat | [x] |
+| 보고서·영상·exe zip 제출 | [ ] 직접 |

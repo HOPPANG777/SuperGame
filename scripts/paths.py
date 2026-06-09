@@ -1,13 +1,36 @@
-"""프로젝트 경로 및 리소스 로드."""
+"""프로젝트 경로 및 리소스 로드 (개발 / PyInstaller exe 공통)."""
 import os
+import sys
 
 import pygame
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-IMAGE_DIR = os.path.join(ROOT_DIR, "assets", "images")
-FONT_DIR = os.path.join(ROOT_DIR, "assets", "fonts")
-SOUND_DIR = os.path.join(ROOT_DIR, "assets", "sounds")
+
+def _project_root() -> str:
+    """소스 기준 프로젝트 루트."""
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _exe_dir() -> str:
+    """실행 파일이 있는 폴더 (배포 시 score.txt·assets 위치)."""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return _project_root()
+
+
+def assets_root() -> str:
+    """
+    assets 폴더 경로.
+    exe 배포: SuperGame.exe 와 같은 위치의 assets/ (강의 14권장).
+    """
+    return os.path.join(_exe_dir(), "assets")
+
+
+ROOT_DIR = _project_root()
+IMAGE_DIR = os.path.join(assets_root(), "images")
+FONT_DIR = os.path.join(assets_root(), "fonts")
+SOUND_DIR = os.path.join(assets_root(), "sounds")
 DOCS_DIR = os.path.join(ROOT_DIR, "docs")
+SCORE_FILE = os.path.join(_exe_dir(), "score.txt")
 
 FONT_MAPLE_BOLD = "Maplestory Bold.ttf"
 FONT_MAPLE_LIGHT = "Maplestory Light.ttf"
@@ -46,7 +69,7 @@ def load_sound(name: str, volume: float = 0.5) -> pygame.mixer.Sound | None:
 
 
 BGM_FILENAME = "입브금2.wav"
-BGM_VOLUME = 0.12  # 효과음보다 낮게 — 은은한 배경용
+BGM_VOLUME = 0.35
 
 
 def init_bgm(filename: str = BGM_FILENAME, volume: float = BGM_VOLUME) -> bool:

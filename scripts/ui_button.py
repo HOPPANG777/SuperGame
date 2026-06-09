@@ -4,7 +4,8 @@ import pygame
 from scripts.paths import IMAGE_PANEL, load_image
 
 PANEL_COLORKEY = (0, 0, 0)
-PANEL_SIZE = (300, 72)
+PANEL_SIZE_TITLE = (240, 71)
+PANEL_SIZE_RESULT = (190, 59)
 HOVER_DARKEN = 0.55
 
 
@@ -22,7 +23,7 @@ class MenuButton:
         font: pygame.font.Font,
         text_color: tuple[int, int, int],
         action: str,
-        panel_size: tuple[int, int] = PANEL_SIZE,
+        panel_size: tuple[int, int] = PANEL_SIZE_TITLE,
     ) -> None:
         self.label = label
         self.action = action
