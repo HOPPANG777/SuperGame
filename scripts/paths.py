@@ -39,6 +39,36 @@ IMAGE_TITLE_BG = "NordicLumberjacTitle.png"
 IMAGE_PANEL = "Panel1.png"
 IMAGE_DEFEAT_BG = "막혔다2.png"
 IMAGE_CLEAR_BG = "이겼다2.png"
+ICON_FILENAME = "HOPPANG_2.png"
+WINDOW_ICON_SIZE = (32, 32)
+
+
+def setup_windows_app_id(app_id: str = "SuperGame.HOPPANG") -> None:
+    """Windows 작업 표시줄 아이콘용 AppUserModelID."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+    except (AttributeError, OSError):
+        pass
+
+
+def apply_window_icon() -> None:
+    """실행 중 창·작업 표시줄 아이콘 (HOPPANG_2.png)."""
+    path = os.path.join(IMAGE_DIR, ICON_FILENAME)
+    if not os.path.isfile(path):
+        return
+    try:
+        icon = pygame.image.load(path)
+        if icon.get_width() != WINDOW_ICON_SIZE[0] or icon.get_height() != WINDOW_ICON_SIZE[1]:
+            icon = pygame.transform.smoothscale(icon, WINDOW_ICON_SIZE)
+        if pygame.display.get_surface() is not None:
+            icon = icon.convert_alpha()
+        pygame.display.set_icon(icon)
+    except pygame.error:
+        pass
 
 
 def load_font(name: str, size: int) -> pygame.font.Font:

@@ -31,16 +31,19 @@ from scripts.screens import (
 )
 from scripts.constants import MAX_LIVES, SCREEN_SIZE
 from scripts.high_score import load_high_score, submit_score
+from scripts.paths import apply_window_icon, setup_windows_app_id
 
 
 class GameManager:
     """타이틀 → 플레이 → 클리어/사망 → 게임오버 흐름 총괄."""
 
     def __init__(self) -> None:
+        setup_windows_app_id()
         pygame.mixer.pre_init(44100, -16, 2, 512)
         pygame.init()
         pygame.display.set_caption("Super Game")
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        apply_window_icon()
         self.clock = pygame.time.Clock()
 
         self.fonts = GameFonts()

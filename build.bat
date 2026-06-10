@@ -9,13 +9,13 @@ if not exist "venv\Scripts\python.exe" (
     exit /b 1
 )
 
-echo Installing PyInstaller...
-venv\Scripts\pip.exe install pyinstaller -q
+echo Installing PyInstaller + Pillow...
+venv\Scripts\pip.exe install pyinstaller pillow -q
 
 echo Building SuperGame.exe...
 venv\Scripts\pyinstaller.exe -w -F ^
     --name=SuperGame ^
-    --icon=assets\images\HOPPANG_2.ico ^
+    --icon=assets\images\HOPPANG_2.png ^
     game.py
 
 if errorlevel 1 (
